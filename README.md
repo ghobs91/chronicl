@@ -2,8 +2,7 @@
 
 ## Overview
 
-**Chronicl** is a web application built with React that enables users to seamlessly archive content from URLs using the decentralized Nostr protocol. By connecting to various Nostr relays, users can create and manage archives that are stored in a distributed manner, ensuring resilience and accessibility. The application offers a user-friendly interface for reading articles and archiving personal annotations.
-
+**Chronicl** is a web application that enables users to archive content from URLs using the decentralized Nostr protocol. By connecting to various Nostr relays, users can create and manage archives that are stored in a distributed manner, ensuring resilience and accessibility.
 ## Key Feature: Decentralized Archiving
 
 ### What is Decentralized Archiving?
