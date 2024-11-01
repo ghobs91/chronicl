@@ -1,14 +1,14 @@
-# Nostr Reader
+# Chronicl
 
 ## Overview
 
-**Nostr Reader** is a web application built with React that enables users to seamlessly archive content from URLs using the decentralized Nostr protocol. By connecting to various Nostr relays, users can create and manage archives that are stored in a distributed manner, ensuring resilience and accessibility. The application offers a user-friendly interface for reading articles and archiving personal annotations.
+**Chronicl** is a web application built with React that enables users to seamlessly archive content from URLs using the decentralized Nostr protocol. By connecting to various Nostr relays, users can create and manage archives that are stored in a distributed manner, ensuring resilience and accessibility. The application offers a user-friendly interface for reading articles and archiving personal annotations.
 
 ## Key Feature: Decentralized Archiving
 
 ### What is Decentralized Archiving?
 
-Decentralized archiving refers to the ability to store and manage content in a distributed network rather than relying on a single centralized server. Nostr Reader leverages the Nostr protocol to facilitate this functionality, allowing users to publish their notes and archives to multiple relays. This ensures that the archived content is not dependent on a single entity, providing greater security and redundancy.
+Decentralized archiving refers to the ability to store and manage content in a distributed network rather than relying on a single centralized server. Chronicl leverages the Nostr protocol to facilitate this functionality, allowing users to publish their notes and archives to multiple relays. This ensures that the archived content is not dependent on a single entity, providing greater security and redundancy.
 
 ### How It Works
 
@@ -33,7 +33,7 @@ Decentralized archiving refers to the ability to store and manage content in a d
 
 ## Installation
 
-To run the Nostr Reader locally, follow these steps:
+To run the Chronicl locally, follow these steps:
 
 1. **Clone the Repository**:
 
