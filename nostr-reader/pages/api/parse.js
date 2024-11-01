@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     // Fetch the content
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; NostrReader/1.0)",
+        "User-Agent": "Mozilla/5.0 (compatible; Chronicl/1.0)",
         Accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",

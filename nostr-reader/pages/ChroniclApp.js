@@ -25,7 +25,7 @@ const derivePublicKey = (privateKey) => {
   return getPublicKey(privateKey);
 };
 
-const NostrReaderApp = () => {
+const ChroniclApp = () => {
   const [url, setUrl] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -309,4 +309,4 @@ const NostrReaderApp = () => {
   );
 };
 
-export default NostrReaderApp;
+export default ChroniclApp;
