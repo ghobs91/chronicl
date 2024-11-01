@@ -305,6 +305,17 @@ const ChroniclApp = () => {
           </div>
         </div>
       </Card>
+      {/* Footer Section */}
+      <footer className="text-center py-4">
+        <a
+          href="https://github.com/ghobs91/chronicl"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          View the source code on GitHub
+        </a>
+      </footer>
     </div>
   );
 };
