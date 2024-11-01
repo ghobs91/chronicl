@@ -5,10 +5,6 @@
 **Chronicl** is a web application that enables users to archive content from URLs using the decentralized Nostr protocol. By connecting to various Nostr relays, users can create and manage archives that are stored in a distributed manner, ensuring resilience and accessibility.
 ## Key Feature: Decentralized Archiving
 
-### What is Decentralized Archiving?
-
-Decentralized archiving refers to the ability to store and manage content in a distributed network rather than relying on a single centralized server. Chronicl leverages the Nostr protocol to facilitate this functionality, allowing users to publish their notes and archives to multiple relays. This ensures that the archived content is not dependent on a single entity, providing greater security and redundancy.
-
 ### How It Works
 
 1. **Generate Keys**: Users generate cryptographic keys (private and public) upon initializing the app.
