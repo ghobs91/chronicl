@@ -1,4 +1,4 @@
-import NostrReaderApp from "../components/NostrReaderApp";
+import NostrReaderApp from "../pages/NostrReaderApp";
 
 export default function Home() {
   return (

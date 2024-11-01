@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
-import {
-  generatePrivateKey,
-  getPublicKey,
-  getEventHash,
-  signEvent,
-} from "nostr-tools";
-import { RelayPool } from "nostr-tools";
-import { Card } from "./ui/card";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Alert } from "./ui/alert";
+import { SimplePool } from "nostr-tools";
+import { getEventHash } from "nostr-tools";
+import { getSignature } from "nostr-tools";
+import { getPublicKey } from "nostr-tools";
+import { finalizeEvent, verifyEvent } from "nostr-tools/pure";
+import * as secp256k1 from "@noble/secp256k1";
+import { Card } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Alert } from "../components/ui/alert";
 import { Loader2 } from "lucide-react";
 
 const RELAYS = [
@@ -17,6 +16,14 @@ const RELAYS = [
   "wss://relay.nostr.band",
   "wss://nos.lol",
 ];
+
+const generatePrivateKey = () => {
+  return secp256k1.etc.bytesToHex(secp256k1.utils.randomPrivateKey());
+};
+
+const derivePublicKey = (privateKey) => {
+  return getPublicKey(privateKey);
+};
 
 const NostrReaderApp = () => {
   const [url, setUrl] = useState("");
@@ -27,38 +34,58 @@ const NostrReaderApp = () => {
   const [selectedArchive, setSelectedArchive] = useState(null);
   const [privateKey, setPrivateKey] = useState("");
   const [publicKey, setPublicKey] = useState("");
-  const [relayPool, setRelayPool] = useState(null);
+  const [pool, setPool] = useState(null);
   const [articleMeta, setArticleMeta] = useState(null);
 
   useEffect(() => {
     initializeNostr();
     return () => {
-      if (relayPool) {
-        relayPool.close();
+      if (pool) {
+        pool.close();
       }
     };
   }, []);
 
   const initializeNostr = async () => {
     try {
+      console.log("Starting Nostr initialization...");
+
+      // Generate keys using nostr-tools functions
       const privKey = generatePrivateKey();
-      const pubKey = getPublicKey(privKey);
+      console.log("Private key generated");
+
+      const pubKey = derivePublicKey(privKey);
+      console.log("Public key generated");
+
       setPrivateKey(privKey);
       setPublicKey(pubKey);
 
-      const pool = new RelayPool(RELAYS);
-      await Promise.all(
-        RELAYS.map(
-          (relay) =>
-            new Promise((resolve, reject) => {
-              pool.on("connect", (relay) => resolve());
-              pool.on("error", (relay) => reject());
-            }),
-        ),
-      );
-      setRelayPool(pool);
+      // Create new pool
+      const newPool = new SimplePool();
+      console.log("Pool created");
+
+      // Connect to relays
+      let connected = false;
+      for (const relay of RELAYS) {
+        try {
+          console.log(`Attempting to connect to ${relay}...`);
+          await newPool.ensureRelay(relay);
+          console.log(`Successfully connected to ${relay}`);
+          connected = true;
+        } catch (err) {
+          console.warn(`Failed to connect to ${relay}:`, err);
+        }
+      }
+
+      if (!connected) {
+        throw new Error("Could not connect to any relays");
+      }
+
+      setPool(newPool);
+      setError(""); // Clear any previous errors
     } catch (err) {
-      setError("Failed to initialize Nostr connection");
+      console.error("Detailed initialization error:", err);
+      setError("Failed to initialize Nostr connection: " + err.message);
     }
   };
 
@@ -99,73 +126,83 @@ const NostrReaderApp = () => {
   };
 
   const fetchNostrArchives = async (urlToFetch) => {
+    if (!pool) {
+      setError("Nostr connection not initialized");
+      return;
+    }
+
     try {
       const filter = {
-        kinds: [9802],
+        kinds: [9803],
         "#r": [urlToFetch],
       };
 
-      const events = [];
-      const sub = relayPool.sub([filter]);
+      // Use the querySync method to retrieve multiple events
+      const events = await pool.querySync(RELAYS, filter);
 
-      return new Promise((resolve, reject) => {
-        sub.on("event", (event) => {
-          events.push({
-            timestamp: event.created_at * 1000,
-            content: event.content,
-            id: event.id,
-          });
-        });
+      const sortedEvents = events
+        .map((event) => ({
+          timestamp: event.created_at * 1000,
+          content: event.content,
+          id: event.id,
+        }))
+        .sort((a, b) => b.timestamp - a.timestamp);
 
-        sub.on("eose", () => {
-          const sortedEvents = events.sort((a, b) => b.timestamp - a.timestamp);
-          setArchives(sortedEvents);
-          resolve();
-        });
-
-        setTimeout(() => {
-          sub.unsub();
-          resolve();
-        }, 3000);
-      });
+      setArchives(sortedEvents);
     } catch (err) {
-      setError("Failed to fetch archives");
+      console.error("Failed to fetch archives:", err);
+      setError("Failed to fetch archives: " + err.message);
     }
   };
 
   const createArchive = async () => {
+    if (!pool) {
+      setError("Nostr connection not initialized");
+      return;
+    }
+
     try {
+      // Create the event object
       const event = {
-        kind: 9802,
+        kind: 9803,
         created_at: Math.floor(Date.now() / 1000),
-        tags: [["r", url]],
+        tags: [["r", url]], // Ensure the URL is correctly set
         content: content,
-        pubkey: publicKey,
       };
 
-      event.id = getEventHash(event);
-      event.sig = signEvent(event, privateKey);
+      // Sign the event using finalizeEvent
+      const signedEvent = finalizeEvent(event, privateKey);
 
-      await Promise.all(
-        RELAYS.map(
-          (relay) =>
-            new Promise((resolve, reject) => {
-              relayPool.publish(event, relay);
-              resolve();
-            }),
-        ),
-      );
+      // Verify the event (optional, but good for debugging)
+      const isGood = verifyEvent(signedEvent);
+      if (!isGood) {
+        throw new Error("Event verification failed");
+      }
 
-      setArchives([
-        {
-          timestamp: event.created_at * 1000,
-          content: event.content,
-          id: event.id,
-        },
-        ...archives,
-      ]);
+      // Publish to all relays
+      const pubs = pool.publish(RELAYS, signedEvent); // Use the signed event
+
+      // Wait for at least one successful publish
+      try {
+        await Promise.any(pubs);
+
+        // Add to local archives
+        setArchives((prev) => [
+          {
+            timestamp: signedEvent.created_at * 1000,
+            content: signedEvent.content,
+            id: signedEvent.id,
+          },
+          ...prev,
+        ]);
+
+        setError(""); // Clear any previous errors
+      } catch (err) {
+        throw new Error("Failed to publish to any relay");
+      }
     } catch (err) {
-      setError("Failed to create archive");
+      console.error("Archive creation error:", err);
+      setError("Failed to create archive: " + err.message);
     }
   };
 
@@ -173,7 +210,9 @@ const NostrReaderApp = () => {
     <div className="max-w-4xl mx-auto p-4 space-y-4">
       <Card>
         <div className="p-6">
-          <h1 className="text-2xl font-bold mb-6">Nostr Reader</h1>
+          <h1 className="text-2xl font-bold mb-6">
+            Chronicl - Decentralized Internet Archive
+          </h1>
 
           <div className="space-y-4">
             <div className="flex gap-2">
@@ -196,7 +235,7 @@ const NostrReaderApp = () => {
               </Button>
               <Button
                 onClick={createArchive}
-                disabled={!content || !relayPool}
+                disabled={!content || !pool}
                 variant="secondary"
               >
                 Archive
